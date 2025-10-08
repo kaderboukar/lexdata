@@ -1,0 +1,24 @@
+# Fichiers Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Fichiers environnement
+.env
+.env.local
+
+# Fichiers build
+dist/
+build/
+
+# Fichiers temporaires
+*.tmp
+*.log
+*.cache
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Fichiers PostgreSQL locaux (si tests)
+postgres-data/
