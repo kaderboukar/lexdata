@@ -1,0 +1,73 @@
+---
+# ===========================================================================
+# Redis — StatefulSet + PVC + Service
+# ===========================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: lexdata
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lexdata-redis
+  namespace: lexdata
+  labels:
+    app: lexdata-redis
+spec:
+  serviceName: lexdata-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-redis
+  template:
+    metadata:
+      labels:
+        app: lexdata-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-redis
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

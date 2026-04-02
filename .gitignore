@@ -1,0 +1,54 @@
+# ─── Build Artifacts ────────────────────────────────────────────────────────
+target/
+*.jar
+*.war
+*.class
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Maven ───────────────────────────────────────────────────────────────────
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# ─── IDEs ────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.factorypath
+.project
+.classpath
+.settings/
+.vscode/
+*.code-workspace
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Spring Boot ─────────────────────────────────────────────────────────────
+spring-shell.log
+HELP.md
+
+# ─── Docker ──────────────────────────────────────────────────────────────────
+# (keep docker-compose.yml — it's essential)
+
+# ─── Kubernetes secrets (never commit real secrets) ──────────────────────────
+kubeconfig
+*.kubeconfig
+k8s/secrets.yaml
+
+# ─── Scratch / Test artifacts ────────────────────────────────────────────────
+*.json.bak
+api_test_result.json
+login.json
+
+# ─── Node (frontend) ─────────────────────────────────────────────────────────
+node_modules/
+lexdata-frontend/node_modules/
+lexdata-frontend/build/
+lexdata-frontend/.next/
+lexdata-frontend/dist/

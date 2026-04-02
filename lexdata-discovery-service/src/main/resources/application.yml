@@ -1,0 +1,76 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: lexdata-discovery-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  security:
+    user:
+      name: ${EUREKA_ADMIN_USERNAME:admin}
+      password: ${EUREKA_ADMIN_PASSWORD}
+
+# Configuration par défaut (commune)
+eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://${spring.security.user.name}:${spring.security.user.password}@${eureka.instance.hostname}:${server.port}/eureka/}
+  server:
+    wait-time-in-ms-when-sync-empty: 5
+    enable-self-preservation: true # Activé par défaut pour la résilience
+    eviction-interval-timer-in-ms: 10000 
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    com.lexdata.discovery: INFO
+    org.springframework.cloud.netflix.eureka: INFO
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+
+---
+# Profil de Développement
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+eureka:
+  server:
+    enable-self-preservation: false # Désactivé en dev pour voir les déconnexions rapidement
+    eviction-interval-timer-in-ms: 5000
+
+---
+# Profil de Production
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  server:
+    enable-self-preservation: true
+    eviction-interval-timer-in-ms: 30000 

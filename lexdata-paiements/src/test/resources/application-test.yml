@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:paymentdb;DB_CLOSE_DELAY=-1
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  cloud:
+    discovery:
+      enabled: false
+
+app:
+  jwtSecret: "testSecretKeyWithEnoughEntropyForHS256Algorithm12345678"

@@ -1,0 +1,114 @@
+# =============================================================================
+# Deploy — Kubernetes Rollout
+# Triggered by the CD workflow or manually via workflow_dispatch.
+# Requires: KUBECONFIG secret (base64 encoded kubeconfig file).
+# Uses a GitHub Environment "production" for manual approval gating.
+# =============================================================================
+name: Deploy — Kubernetes Rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit SHA to deploy (image tag)'
+        required: true
+        default: ''
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/lexdata
+  NAMESPACE: lexdata
+
+jobs:
+  deploy:
+    name: Deploy to Kubernetes (production)
+    runs-on: ubuntu-latest
+    environment: production  # ← requires manual approval in GitHub UI
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Determine image SHA tag
+        id: tag
+        run: |
+          SHA="${{ inputs.sha }}"
+          if [ -z "$SHA" ]; then
+            SHA="${{ github.sha }}"
+          fi
+          echo "sha_tag=sha-${SHA:0:7}" >> $GITHUB_OUTPUT
+
+      # ── Update each Deployment with the new image tag ──────────────────────
+      - name: Update service images
+        run: |
+          TAG="${{ steps.tag.outputs.sha_tag }}"
+          SERVICES=(
+            "lexdata-discovery:discovery-service"
+            "lexdata-gateway:gateway"
+            "lexdata-auth:auth-service"
+            "lexdata-user:user-service"
+            "lexdata-juridique-base:juridique-base"
+            "lexdata-annuaire:annuaire"
+            "lexdata-veille:veille"
+            "lexdata-synthese:synthese"
+            "lexdata-tribune:tribune"
+            "lexdata-contrats:contrats"
+            "lexdata-calendrier:calendrier"
+            "lexdata-consultations:consultations"
+            "lexdata-paiements:paiements"
+            "lexdata-notifications:notifications"
+            "lexdata-admin:admin"
+            "lexdata-monitoring:monitoring"
+          )
+
+          for entry in "${SERVICES[@]}"; do
+            DEPLOYMENT="${entry%%:*}"
+            IMAGE_NAME="${entry##*:}"
+            CONTAINER="${IMAGE_NAME}"
+            FULL_IMAGE="${{ env.IMAGE_PREFIX }}/${IMAGE_NAME}:${TAG}"
+            echo "→ Patching ${DEPLOYMENT}: ${FULL_IMAGE}"
+            kubectl set image deployment/${DEPLOYMENT} ${CONTAINER}=${FULL_IMAGE} -n ${{ env.NAMESPACE }}
+          done
+
+      # ── Wait for all rollouts to complete ──────────────────────────────────
+      - name: Wait for rollout completion
+        run: |
+          DEPLOYMENTS=(
+            lexdata-discovery
+            lexdata-gateway
+            lexdata-auth
+            lexdata-user
+            lexdata-juridique-base
+            lexdata-annuaire
+            lexdata-veille
+            lexdata-synthese
+            lexdata-tribune
+            lexdata-contrats
+            lexdata-calendrier
+            lexdata-consultations
+            lexdata-paiements
+            lexdata-notifications
+            lexdata-admin
+            lexdata-monitoring
+          )
+
+          for DEPLOYMENT in "${DEPLOYMENTS[@]}"; do
+            echo "⏳ Waiting for ${DEPLOYMENT}..."
+            kubectl rollout status deployment/${DEPLOYMENT} -n ${{ env.NAMESPACE }} --timeout=180s
+          done
+
+      - name: Deployment summary
+        run: |
+          echo "✅ All services deployed successfully!"
+          kubectl get pods -n ${{ env.NAMESPACE }} --no-headers | awk '{print $1, $3}'

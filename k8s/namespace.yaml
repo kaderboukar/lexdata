@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lexdata
+  labels:
+    app.kubernetes.io/name: lexdata
+    app.kubernetes.io/managed-by: kubectl

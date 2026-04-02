@@ -1,0 +1,13 @@
+package com.lexdata.juridique.models;
+
+public enum LegalDomain {
+    DROIT_AFFAIRES,
+    DROIT_TRAVAIL,
+    DROIT_PENAL,
+    DROIT_FISCAL,
+    DROIT_CONSTITUTIONNEL,
+    DROIT_ADMINISTRATIF,
+    DROIT_COMMUNAUTAIRE_UEMOA,
+    DROIT_COMMUNAUTAIRE_CEDEAO,
+    AUTRE
+}

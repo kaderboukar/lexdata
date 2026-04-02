@@ -1,0 +1,30 @@
+target/
+.git/
+*.md
+.gitignore
+.mvn/
+Dockerfile*
+docker-compose*
+
+# Logs
+*.log
+logs/
+
+# IDE & OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Frontend build (only relevant in this directory)
+node_modules/
+build/
+dist/
+.next/
+
+# Test artifacts
+**/src/test/
+
+# K8s manifests (not needed inside image)
+k8s/

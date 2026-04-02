@@ -1,0 +1,17 @@
+.contact-page-card {
+  padding: 2rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.contact-page-card h1 {
+  margin-bottom: 0.75rem;
+}
+
+.contact-page-card .contact-page-lead {
+  margin-bottom: 1.5rem;
+}
+
+.contact-page-card .contact-page-mail {
+  margin-bottom: 2rem;
+}

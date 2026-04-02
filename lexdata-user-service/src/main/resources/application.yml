@@ -1,0 +1,79 @@
+server:
+  port: 9003 # Port officiel selon doc
+
+spring:
+  application:
+    name: lexdata-user-service
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+  # Connexion Base de Données (Même instance Docker, mais tables différentes gérées par JPA)
+  datasource:
+    # On laisse Docker Compose écraser ça, mais on met des valeurs par défaut propres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/lexdata_db}
+    username: ${SPRING_DATASOURCE_USERNAME:lexdata_user}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Configuration Eureka (Mode Localhost forcé pour éviter les timeouts)
+eureka:
+  instance:
+    # Magie : Si Docker passe EUREKA_INSTANCE_HOSTNAME, on l'utilise. Sinon, localhost.
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: true
+    # ON A SUPPRIMÉ ip-address: 127.0.0.1 !!!
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    register-with-eureka: true
+    fetch-registry: true
+
+# Configuration JWT (Doit être IDENTIQUE à celle de Auth-Service)
+lexdata:
+  app:
+    jwtSecret: ${LEXDATA_JWT_SECRET}
+    jwtExpirationMs: ${LEXDATA_JWT_EXPIRATION:86400000}
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    com.lexdata.user: INFO
+
+springdoc:
+  api-docs:
+    path: /api/users/v3/api-docs
+  swagger-ui:
+    path: /api/users/swagger-ui.html
+

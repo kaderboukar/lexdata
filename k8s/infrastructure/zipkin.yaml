@@ -1,0 +1,46 @@
+---
+# ===========================================================================
+# Zipkin — Deployment + Service
+# ===========================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-zipkin
+  namespace: lexdata
+  labels:
+    app: lexdata-zipkin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-zipkin
+  template:
+    metadata:
+      labels:
+        app: lexdata-zipkin
+    spec:
+      containers:
+        - name: zipkin
+          image: openzipkin/zipkin-slim
+          ports:
+            - containerPort: 9411
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-zipkin
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-zipkin
+  ports:
+    - port: 9411
+      targetPort: 9411

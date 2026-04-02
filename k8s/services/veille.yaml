@@ -1,0 +1,89 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-veille
+  namespace: lexdata
+  labels:
+    app: lexdata-veille
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-veille
+  template:
+    metadata:
+      labels:
+        app: lexdata-veille
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: veille
+          image: lexdata/veille:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9005
+          env:
+            - name: SERVER_PORT
+              value: "9005"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: lexdata-veille
+            - name: SPRING_REDIS_HOST
+              value: lexdata-redis
+            - name: SPRING_REDIS_PORT
+              value: "6379"
+          envFrom:
+            - configMapRef:
+                name: lexdata-config
+            - secretRef:
+                name: lexdata-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9005
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9005
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9005
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "750m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-veille
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-veille
+  ports:
+    - port: 9005
+      targetPort: 9005

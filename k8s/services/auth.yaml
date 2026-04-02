@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-auth
+  namespace: lexdata
+  labels:
+    app: lexdata-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-auth
+  template:
+    metadata:
+      labels:
+        app: lexdata-auth
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: auth
+          image: lexdata/auth-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9002
+          env:
+            - name: SERVER_PORT
+              value: "9002"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: lexdata-auth
+          envFrom:
+            - configMapRef:
+                name: lexdata-config
+            - secretRef:
+                name: lexdata-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9002
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9002
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9002
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "750m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-auth
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-auth
+  ports:
+    - port: 9002
+      targetPort: 9002

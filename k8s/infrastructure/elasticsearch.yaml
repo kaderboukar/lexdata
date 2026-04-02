@@ -1,0 +1,92 @@
+---
+# ===========================================================================
+# Elasticsearch — StatefulSet + PVC + Service
+# ===========================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch-pvc
+  namespace: lexdata
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lexdata-elasticsearch
+  namespace: lexdata
+  labels:
+    app: lexdata-elasticsearch
+spec:
+  serviceName: lexdata-elasticsearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-elasticsearch
+  template:
+    metadata:
+      labels:
+        app: lexdata-elasticsearch
+    spec:
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+          volumeMounts:
+            - name: elastic-data
+              mountPath: /usr/share/elasticsearch/data
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+            - name: xpack.security.enabled
+              value: "false"
+          volumeMounts:
+            - name: elastic-data
+              mountPath: /usr/share/elasticsearch/data
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: 9200
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "768Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: elastic-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-elasticsearch
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-elasticsearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      port: 9300
+      targetPort: 9300

@@ -1,0 +1,119 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: lexdata-auth-service
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=15m
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+  datasource:
+    # On laisse Docker Compose écraser ça, mais on met des valeurs par défaut propres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/lexdata_db}
+    username: ${SPRING_DATASOURCE_USERNAME:lexdata_user}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+
+
+eureka:
+  instance:
+    # Magie : Si Docker passe EUREKA_INSTANCE_HOSTNAME, on l'utilise. Sinon, localhost.
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: true
+    # ON A SUPPRIMÉ ip-address: 127.0.0.1 !!!
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    register-with-eureka: true
+    fetch-registry: true
+
+lexdata:
+  # Comptes créés une seule fois si absents (superadmin / agentadmin). Surcharge via .env en prod.
+  bootstrap:
+    super-admin-password: ${LEXDATA_BOOTSTRAP_SUPER_ADMIN_PASSWORD:ChangeMe_SuperAdmin_2026}
+    agent-admin-password: ${LEXDATA_BOOTSTRAP_AGENT_ADMIN_PASSWORD:ChangeMe_AgentAdmin_2026}
+  internal:
+    apiKey: ${LEXDATA_INTERNAL_API_KEY:lexdata-dev-internal-key}
+  app:
+    jwtSecret: ${LEXDATA_JWT_SECRET}
+    jwtExpirationMs: ${LEXDATA_JWT_EXPIRATION:86400000}
+    jwtRefreshExpirationMs: ${LEXDATA_JWT_REFRESH_EXPIRATION:2592000000}
+    # URL publique du SPA (sans chemin /api). Docker : http://localhost (Nginx:80). Dev Vite : http://localhost:5173
+    frontend-url: ${FRONTEND_URL:http://localhost}
+    mail-from: ${MAIL_FROM:noreply@lexdata.sn}
+  security:
+    brute-force:
+      max-attempts: 5
+      lock-duration-minutes: 15
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    com.lexdata.auth: INFO
+
+springdoc:
+  api-docs:
+    path: /api/auth/v3/api-docs
+  swagger-ui:
+    path: /api/auth/swagger-ui.html

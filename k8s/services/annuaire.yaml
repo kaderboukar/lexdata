@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-annuaire
+  namespace: lexdata
+  labels:
+    app: lexdata-annuaire
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-annuaire
+  template:
+    metadata:
+      labels:
+        app: lexdata-annuaire
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: annuaire
+          image: lexdata/annuaire:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9007
+          env:
+            - name: SERVER_PORT
+              value: "9007"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: lexdata-annuaire
+          envFrom:
+            - configMapRef:
+                name: lexdata-config
+            - secretRef:
+                name: lexdata-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9007
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9007
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9007
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "750m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-annuaire
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-annuaire
+  ports:
+    - port: 9007
+      targetPort: 9007

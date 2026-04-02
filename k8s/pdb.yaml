@@ -1,0 +1,36 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lexdata-gateway-pdb
+  namespace: lexdata
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lexdata-gateway
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lexdata-auth-pdb
+  namespace: lexdata
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lexdata-auth
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lexdata-user-pdb
+  namespace: lexdata
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lexdata-user
+

@@ -1,0 +1,86 @@
+---
+# ===========================================================================
+# PostgreSQL — StatefulSet + PVC + Service
+# ===========================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: lexdata
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lexdata-postgres
+  namespace: lexdata
+  labels:
+    app: lexdata-postgres
+spec:
+  serviceName: lexdata-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-postgres
+  template:
+    metadata:
+      labels:
+        app: lexdata-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: lexdata-config
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lexdata-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: POSTGRES_DB
+              value: lexdata_db
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "lexdata_user", "-d", "lexdata_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-postgres
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None   # Headless service for StatefulSet

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lexdata-config
+  namespace: lexdata
+data:
+  # Database
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.PostgreSQLDialect"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://lexdata-postgres:5432/lexdata_db"
+  SPRING_DATASOURCE_USERNAME: "lexdata_user"
+
+  # Service Discovery
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+
+  # Messaging
+  SPRING_RABBITMQ_HOST: "lexdata-rabbitmq"
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_USERNAME: "guest"
+
+  # Search
+  SPRING_ELASTICSEARCH_URIS: "http://lexdata-elasticsearch:9200"
+
+  # Tracing
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://lexdata-zipkin:9411/api/v2/spans"
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+
+  # JWT
+  LEXDATA_APP_JWTEXPIRATIONMS: "1800000"
+  LEXDATA_APP_JWTREFRESHEXPIRATIONMS: "2592000000"
+
+  # Logging
+  LOGSTASH_HOST: "lexdata-logstash"
+
+  # Spring common
+  SPRING_PROFILES_ACTIVE: "prod"

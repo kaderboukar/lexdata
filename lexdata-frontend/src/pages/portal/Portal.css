@@ -1,0 +1,1173 @@
+/* ==========================================================================
+   LEXDATA - PORTAL / RECHERCHE (Premium CSS)
+   ========================================================================== */
+
+/* --- HEADER RECHERCHE --- */
+.search-header {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 24, 39, 0.6);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0.8rem 1.2rem;
+  gap: 1rem;
+  transition: all var(--transition);
+  margin-bottom: 1.5rem;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+  background: rgba(15, 24, 39, 0.9);
+}
+
+.search-main-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  outline: none;
+}
+
+.search-main-input::placeholder {
+  color: var(--text-muted);
+}
+
+.btn-clear {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 50%;
+  transition: color var(--transition);
+}
+
+.btn-clear:hover {
+  color: var(--danger);
+}
+
+/* --- CONTROLES & FILTRES --- */
+.search-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.search-mode-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem;
+  border: 1px solid var(--border-light);
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mode-btn.active {
+  background: var(--surface-hover);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.search-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-select {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  min-width: 180px;
+}
+
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.elastic-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* --- RESULTATS --- */
+.results-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-card-link {
+  text-decoration: none;
+  display: block;
+}
+
+.result-card {
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-light);
+  transition: all var(--transition);
+}
+
+.result-card:hover {
+  transform: translateX(5px);
+  border-color: var(--accent);
+  background: rgba(201, 168, 76, 0.05);
+  box-shadow: var(--shadow-accent);
+}
+
+.result-title {
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  line-height: 1.4;
+}
+
+.result-ref {
+  font-size: 0.8rem;
+  margin-bottom: 0.8rem;
+  padding-left: 2rem;
+  /* Aligné avec le texte, sous l'icône */
+}
+
+.result-snippet {
+  font-size: 0.95rem;
+  padding-left: 2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.6;
+}
+
+/* --- SKELETONS --- */
+.skeleton-card {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-badge {
+  width: 80px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-line {
+  width: 100%;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-line.short {
+  width: 75%;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* --- PAGINATION --- */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-top: 2rem;
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-filters {
+    flex-direction: column;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .result-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .result-card-action {
+    align-self: flex-end;
+  }
+}
+
+/* ==========================================================================
+   LEXDATA - VEILLE (Feed & Abonnements)
+   ========================================================================== */
+
+.veille-page {
+  display: flex;
+  gap: 2.5rem;
+  padding-top: 1rem;
+  padding-bottom: 4rem;
+  align-items: flex-start;
+}
+
+/* --- COLONNE GAUCHE (Feed) --- */
+.feed-container {
+  flex: 1 1 65%;
+  max-width: 65%;
+  min-width: 0;
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1rem;
+}
+
+.feed-tabs {
+  display: flex;
+  gap: 1rem;
+}
+
+.dev-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.feed-card {
+  position: relative;
+  transition: transform var(--transition), box-shadow var(--transition);
+  border: 1px solid var(--border-light);
+  border-left-width: 4px;
+  /* Réservé pour la couleur d'urgence */
+}
+
+.feed-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Effet Glow pour les alertes non lues */
+.feed-card.unread {
+  background: linear-gradient(135deg, var(--surface-card) 0%, rgba(201, 168, 76, 0.03) 100%);
+  border-color: rgba(201, 168, 76, 0.3);
+  border-left-color: var(--accent);
+  /* Surchargé par le style inline si besoin */
+}
+
+.feed-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.feed-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.feed-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.ai-summary {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  padding: 1.2rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.2rem;
+}
+
+.ai-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #60a5fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ai-summary-text {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.feed-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: color var(--transition);
+}
+
+.feed-card-footer:hover {
+  color: var(--accent-hover);
+}
+
+/* --- COLONNE DROITE (Abonnements) --- */
+.feed-sidebar {
+  flex: 1 1 35%;
+  max-width: 35%;
+}
+
+.subscription-panel {
+  position: sticky;
+  top: 100px;
+}
+
+.subscription-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.subscription-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.subscription-item {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  transition: border-color var(--transition);
+}
+
+.subscription-item:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sub-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.sub-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Formulaire d'abonnement */
+.sub-form-container {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 1.2rem;
+  margin-top: 1rem;
+}
+
+.sub-form-section {
+  max-height: 140px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+/* Scrollbar fine pour le formulaire */
+.sub-form-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sub-form-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sub-form-section::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.sub-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  border-radius: 4px;
+  transition: background var(--transition);
+}
+
+.sub-checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1024px) {
+  .veille-page {
+    flex-direction: column;
+  }
+
+  .feed-container,
+  .feed-sidebar {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .subscription-panel {
+    position: relative;
+    top: 0;
+  }
+}
+
+/* ==========================================================================
+   LEXDATA - MES NOTES (Workspace Privé)
+   ========================================================================== */
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.notes-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.notes-dev-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-top: 0.8rem;
+  display: inline-block;
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.note-card-full {
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid var(--accent);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.note-card-full:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.note-card-content {
+  flex: 1;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-bottom: 1.5rem;
+}
+
+.note-context-box {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.note-context-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.note-context-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.note-date-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.note-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==========================================================================
+   LEXDATA - USER PROFILE (Paramètres & RGPD)
+   ========================================================================== */
+
+.user-profile-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 1rem;
+  padding-bottom: 4rem;
+}
+
+/* --- EN-TÊTE DU PROFIL --- */
+.profile-header-card {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
+  flex-shrink: 0;
+}
+
+.profile-identity {
+  flex: 1;
+}
+
+.profile-name {
+  margin: 0 0 0.3rem 0;
+  color: var(--text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.profile-email {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+.profile-badges {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* --- GRILLE PRINCIPALE --- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* --- SECTIONS DU FORMULAIRE --- */
+.profile-section {
+  padding: 2rem;
+  margin-bottom: 2rem;
+  /* Pour la colonne de droite */
+}
+
+.section-title {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: -1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+/* Sélecteur de Tags (Spécialités / Domaines) */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Custom Scrollbar pour les tags */
+.tags-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tags-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tags-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.tag-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.tag-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.tag-btn.selected {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Checkboxes Stylisées (Préférences) */
+.preference-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 0.8rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.preference-checkbox:hover {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+}
+
+.preference-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .profile-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-header-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .profile-badges {
+    justify-content: center;
+  }
+
+  .profile-actions {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .profile-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+}
+
+/* ==========================================================================
+   LEXDATA - MES FAVORIS (Bibliothèque)
+   ========================================================================== */
+
+.favorites-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.favorites-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.favorite-card {
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid var(--accent);
+  transition: transform var(--transition), box-shadow var(--transition);
+  height: 100%;
+}
+
+.favorite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-light);
+}
+
+.favorite-card-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.favorite-card-title {
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.favorite-card-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.favorite-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   LEXDATA - NOTIFICATIONS & BELL
+   ========================================================================== */
+
+/* --- CLOCHE & DROPDOWN (NotificationBell) --- */
+.bell-wrapper {
+  position: relative;
+}
+
+.bell-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.bell-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.bell-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  /* Pour le détacher du fond */
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.bell-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  border-radius: var(--radius);
+  background: var(--surface-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  overflow: hidden;
+  transform-origin: top right;
+}
+
+.bell-dropdown-header {
+  padding: 1.2rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.bell-dropdown-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.bell-dropdown-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bell-dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+
+.bell-item {
+  padding: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 1rem;
+  transition: background var(--transition);
+}
+
+.bell-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bell-item.unread {
+  background: rgba(201, 168, 76, 0.05);
+}
+
+/* --- PAGE COMPLÈTE (NotificationsView) --- */
+.notif-view-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.notif-tabs-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.notif-filters {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.notif-card {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+  transition: all var(--transition);
+  border-left: 4px solid transparent;
+}
+
+.notif-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.notif-card.unread {
+  background: rgba(59, 130, 246, 0.05);
+  border-left-color: #3b82f6;
+}
+
+.notif-icon-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.notif-card.unread .notif-icon-wrapper {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.notif-title a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.notif-title a:hover {
+  color: var(--accent);
+}
+
+.notif-message {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+}
+
+.notif-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.notif-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* --- PREFERENCES NOTIFICATIONS --- */
+.prefs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pref-toggle-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition);
+}
+
+.pref-toggle-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pref-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}

@@ -1,0 +1,29 @@
+server:
+  port: 9010
+
+spring:
+  application:
+    name: lexdata-calendrier
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lexdata_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://admin:admin_password@lexdata-discovery:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+lexdata:
+  jwtSecret: "votre_cle_secrete_tres_longue_et_securisee_pour_lexdata_auth_service"
+  jwtExpirationMs: 1800000

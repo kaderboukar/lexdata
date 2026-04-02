@@ -1,0 +1,80 @@
+---
+# ===========================================================================
+# Logstash Pipeline ConfigMap
+# ===========================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline-config
+  namespace: lexdata
+data:
+  logstash.conf: |
+    input {
+      tcp {
+        port => 5044
+        codec => json_lines
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["http://lexdata-elasticsearch:9200"]
+        index => "lexdata-logs-%{+YYYY.MM.dd}"
+      }
+    }
+
+---
+# ===========================================================================
+# Logstash — Deployment + Service
+# ===========================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-logstash
+  namespace: lexdata
+  labels:
+    app: lexdata-logstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-logstash
+  template:
+    metadata:
+      labels:
+        app: lexdata-logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:7.17.10
+          ports:
+            - containerPort: 5044
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xms256m -Xmx256m"
+          volumeMounts:
+            - name: pipeline-config
+              mountPath: /usr/share/logstash/pipeline
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+      volumes:
+        - name: pipeline-config
+          configMap:
+            name: logstash-pipeline-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-logstash
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-logstash
+  ports:
+    - port: 5044
+      targetPort: 5044

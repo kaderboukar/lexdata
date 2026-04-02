@@ -1,0 +1,89 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-notifications
+  namespace: lexdata
+  labels:
+    app: lexdata-notifications
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-notifications
+  template:
+    metadata:
+      labels:
+        app: lexdata-notifications
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: notifications
+          image: lexdata/notifications:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9013
+          env:
+            - name: SERVER_PORT
+              value: "9013"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: lexdata-notifications
+            - name: SPRING_REDIS_HOST
+              value: lexdata-redis
+            - name: SPRING_REDIS_PORT
+              value: "6379"
+          envFrom:
+            - configMapRef:
+                name: lexdata-config
+            - secretRef:
+                name: lexdata-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9013
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9013
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9013
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "750m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-notifications
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-notifications
+  ports:
+    - port: 9013
+      targetPort: 9013

@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexdata-juridique-base
+  namespace: lexdata
+  labels:
+    app: lexdata-juridique-base
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lexdata-juridique-base
+  template:
+    metadata:
+      labels:
+        app: lexdata-juridique-base
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: juridique-base
+          image: lexdata/juridique-base:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9101
+          env:
+            - name: SERVER_PORT
+              value: "9101"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: lexdata-juridique-base
+          envFrom:
+            - configMapRef:
+                name: lexdata-config
+            - secretRef:
+                name: lexdata-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9101
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9101
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9101
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "750m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lexdata-juridique-base
+  namespace: lexdata
+spec:
+  selector:
+    app: lexdata-juridique-base
+  ports:
+    - port: 9101
+      targetPort: 9101

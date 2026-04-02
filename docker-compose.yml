@@ -1,0 +1,609 @@
+# =============================================================================
+# LexData — Docker Compose Unifié
+# Stack complète : Infrastructure + Microservices Backend + Frontend
+# =============================================================================
+
+# Anchor unique avec TOUTES les variables communes (évite les merge keys multiples)
+x-service-env: &service-env
+  SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-validate}
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+  SPRING_DATASOURCE_URL: jdbc:postgresql://lexdata-postgres:5432/lexdata_db
+  SPRING_DATASOURCE_USERNAME: lexdata_user
+  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://admin:${EUREKA_ADMIN_PASSWORD}@lexdata-discovery:8761/eureka}
+  # Secret JWT HEX pour dev local (HS256). Surcharge via variable d'env LEXDATA_JWT_SECRET.
+  LEXDATA_JWT_SECRET: ${LEXDATA_JWT_SECRET:-748afb5d2da18a48d3fbe5bc23df0a50bd6535e3e66fc78ad19a5314213cd949}
+  LEXDATA_JWT_EXPIRATION: ${LEXDATA_JWT_EXPIRATION:-86400000}
+  LEXDATA_JWT_REFRESH_EXPIRATION: ${LEXDATA_JWT_REFRESH_EXPIRATION:-2592000000}
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+  SPRING_RABBITMQ_HOST: lexdata-rabbitmq
+  # Aligné sur RABBITMQ_DEFAULT_USER / RABBITMQ_DEFAULT_PASS du broker (guest est refusé si user custom)
+  SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+  SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+  SPRING_DATA_REDIS_HOST: lexdata-redis
+  SPRING_DATA_REDIS_PORT: 6379
+  SPRING_ELASTICSEARCH_URIS: http://lexdata-elasticsearch:9200
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://lexdata-zipkin:9411/api/v2/spans
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+  # Hôte Logstash sur le réseau Docker. Ne pas laisser une chaîne vide : Spring considère
+  # LOGSTASH_HOST="" comme défini et ignore le defaultValue du logback → destination ":5044" → crash.
+  # Surcharge possible via .env (LOGSTASH_HOST=...). Si vous n'utilisez pas Logstash, l'appender
+  # reste inactif tant que le profil Spring "logstash" n'est pas activé (voir logback-spring.xml).
+  LOGSTASH_HOST: ${LOGSTASH_HOST:-lexdata-logstash}
+  # SMTP de dev (MailHog) — dans un conteneur, localhost:1025 ne pointe pas vers l'hôte
+  MAIL_HOST: lexdata-mailhog
+  MAIL_PORT: "1025"
+  SPRING_MAIL_HOST: lexdata-mailhog
+  SPRING_MAIL_PORT: "1025"
+
+# Dépendances communes aux services qui héritent de *service-env (évite les courses au démarrage)
+x-depends-microservice: &depends-microservice
+  lexdata-postgres:
+    condition: service_healthy
+  lexdata-rabbitmq:
+    condition: service_healthy
+  lexdata-redis:
+    condition: service_healthy
+  lexdata-elasticsearch:
+    condition: service_healthy
+  lexdata-discovery:
+    condition: service_healthy
+
+services:
+
+  # ===========================================================================
+  # INFRASTRUCTURE
+  # ===========================================================================
+
+  lexdata-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lexdata_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: lexdata_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U lexdata_user -d lexdata_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+
+  lexdata-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+
+  lexdata-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      # Sur PC peu chargés ou avec beaucoup de conteneurs : évite l’alarme mémoire / crash Erlang
+      # (voir logs « system_memory_high_watermark », erl_crash.dump).
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK_RELATIVE: "0.4"
+    ports:
+      - "5672:5672"     # AMQP (optionnel si accès depuis le host)
+      - "15672:15672"   # RabbitMQ Management UI
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      # Premier boot observé > 5–6 min sur machine lente ; après « healthy » les services
+      # dépendants peuvent démarrer sans échouer sur la dépendance rabbitmq.
+      start_period: 420s
+
+  # Capture SMTP en dev (auth, notifications). UI : http://localhost:8025
+  lexdata-mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    networks:
+      - lexdata-network
+    ports:
+      - "8025:8025"
+
+  lexdata-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9200/_cluster/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9200/_cluster/health) ) | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'" ]
+      interval: 20s
+      timeout: 15s
+      retries: 15
+      start_period: 120s
+
+  lexdata-zipkin:
+    image: openzipkin/zipkin-slim
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - lexdata-network
+    healthcheck:
+      # CORRECTION : On utilise le vrai endpoint de santé /health
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9411/health || curl -fsS http://localhost:9411/health || exit 1" ]
+      interval: 10s
+      timeout: 8s
+      retries: 10
+      start_period: 45s
+
+  lexdata-logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.10
+    restart: unless-stopped
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    environment:
+      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+    depends_on:
+      lexdata-elasticsearch:
+        condition: service_healthy
+    networks:
+      - lexdata-network
+    healthcheck:
+      # API monitoring Logstash (9600), pas Kibana (5601)
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9600/) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9600/) ) >/dev/null 2>&1" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    restart: unless-stopped
+    environment:
+      ELASTICSEARCH_HOSTS: http://lexdata-elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      lexdata-elasticsearch:
+        condition: service_healthy
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:5601/api/v1/status) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:5601/api/v1/status) ) | grep -q '\"status\":\"ok\"'" ]
+      interval: 20s
+      timeout: 15s
+      retries: 12
+      start_period: 180s
+
+  # ===========================================================================
+  # SERVICE DISCOVERY (Eureka) — démarre EN PREMIER
+  # ===========================================================================
+
+  lexdata-discovery:
+    build:
+      context: ./lexdata-discovery-service
+      dockerfile: ../Dockerfile.service
+    image: lexdata/discovery-service:latest
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8761
+      SPRING_SECURITY_USER_NAME: admin
+      SPRING_SECURITY_USER_PASSWORD: ${EUREKA_ADMIN_PASSWORD}
+      EUREKA_INSTANCE_HOSTNAME: lexdata-discovery
+      SPRING_PROFILES_ACTIVE: prod
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://lexdata-zipkin:9411/api/v2/spans
+    depends_on:
+      # CORRECTION : On force Discovery à attendre Zipkin
+      lexdata-zipkin:
+        condition: service_healthy
+    networks:
+      - lexdata-network
+    healthcheck:
+      # Image JRE : curl présent (pas wget). Eureka peut mettre 4+ min à sortir actuator/healthy
+      # sur une machine chargée — start_period trop court ⇒ « dependency discovery failed ».
+      test: [ "CMD-SHELL", "curl -fsS -u admin:${EUREKA_ADMIN_PASSWORD} http://localhost:8761/actuator/health >/dev/null" ]
+      interval: 15s
+      timeout: 12s
+      retries: 15
+      start_period: 360s
+
+  # ===========================================================================
+  # API GATEWAY
+  # ===========================================================================
+
+  lexdata-gateway:
+    build:
+      context: ./lexdata-gateway
+      dockerfile: ../Dockerfile.service
+    image: lexdata/gateway:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 8081
+      EUREKA_INSTANCE_HOSTNAME: lexdata-gateway
+    ports:
+      - "8081:8081"
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:8081/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:8081/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
+
+  # ===========================================================================
+  # MICROSERVICES CORE
+  # ===========================================================================
+
+  lexdata-auth:
+    build:
+      context: ./lexdata-auth-service
+      dockerfile: ../Dockerfile.service
+    image: lexdata/auth-service:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9002
+      EUREKA_INSTANCE_HOSTNAME: lexdata-auth
+      # Liens des mails (vérification, reset MDP) : doit être l’URL réelle du SPA (Nginx → http://localhost, Vite → http://localhost:5173)
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      LEXDATA_BOOTSTRAP_SUPER_ADMIN_PASSWORD: ${LEXDATA_BOOTSTRAP_SUPER_ADMIN_PASSWORD:-ChangeMe_SuperAdmin_2026}
+      LEXDATA_BOOTSTRAP_AGENT_ADMIN_PASSWORD: ${LEXDATA_BOOTSTRAP_AGENT_ADMIN_PASSWORD:-ChangeMe_AgentAdmin_2026}
+    depends_on:
+      <<: *depends-microservice
+      lexdata-mailhog:
+        condition: service_started
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9002/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9002/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-user:
+    build:
+      context: ./lexdata-user-service
+      dockerfile: ../Dockerfile.service
+    image: lexdata/user-service:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9003
+      EUREKA_INSTANCE_HOSTNAME: lexdata-user
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9003/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9003/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ===========================================================================
+  # MICROSERVICES MÉTIER
+  # ===========================================================================
+
+  lexdata-juridique-base:
+    build:
+      context: ./lexdata-juridique-base
+      dockerfile: ../Dockerfile.service
+    image: lexdata/juridique-base:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9101
+      EUREKA_INSTANCE_HOSTNAME: lexdata-juridique-base
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9101/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9101/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-annuaire:
+    build:
+      context: ./lexdata-annuaire
+      dockerfile: ../Dockerfile.service
+    image: lexdata/annuaire:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9007
+      EUREKA_INSTANCE_HOSTNAME: lexdata-annuaire
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9007/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9007/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-veille:
+    build:
+      context: ./lexdata-veille
+      dockerfile: ../Dockerfile.service
+    image: lexdata/veille:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9005
+      EUREKA_INSTANCE_HOSTNAME: lexdata-veille
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9005/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9005/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-synthese:
+    build:
+      context: ./lexdata-synthese
+      dockerfile: ../Dockerfile.service
+    image: lexdata/synthese:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9006
+      EUREKA_INSTANCE_HOSTNAME: lexdata-synthese
+      JURIDIQUE_BASE_URL: http://lexdata-juridique-base:9101
+    depends_on:
+      <<: *depends-microservice
+      lexdata-juridique-base:
+        condition: service_healthy
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9006/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9006/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-tribune:
+    build:
+      context: ./lexdata-tribune
+      dockerfile: ../Dockerfile.service
+    image: lexdata/tribune:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9008
+      EUREKA_INSTANCE_HOSTNAME: lexdata-tribune
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9008/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9008/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-contrats:
+    build:
+      context: ./lexdata-contrats
+      dockerfile: ../Dockerfile.service
+    image: lexdata/contrats:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9009
+      EUREKA_INSTANCE_HOSTNAME: lexdata-contrats
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9009/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9009/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-calendrier:
+    build:
+      context: ./lexdata-calendrier
+      dockerfile: ../Dockerfile.service
+    image: lexdata/calendrier:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9010
+      EUREKA_INSTANCE_HOSTNAME: lexdata-calendrier
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9010/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9010/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-consultations:
+    build:
+      context: ./lexdata-consultations
+      dockerfile: ../Dockerfile.service
+    image: lexdata/consultations:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9011
+      EUREKA_INSTANCE_HOSTNAME: lexdata-consultations
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9011/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9011/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-paiements:
+    build:
+      context: ./lexdata-paiements
+      dockerfile: ../Dockerfile.service
+    image: lexdata/paiements:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9012
+      EUREKA_INSTANCE_HOSTNAME: lexdata-paiements
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9012/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9012/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-notifications:
+    build:
+      context: ./lexdata-notifications
+      dockerfile: ../Dockerfile.service
+    image: lexdata/notifications:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9013
+      EUREKA_INSTANCE_HOSTNAME: lexdata-notifications
+    depends_on:
+      <<: *depends-microservice
+      lexdata-mailhog:
+        condition: service_started
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9013/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9013/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  lexdata-admin:
+    build:
+      context: ./lexdata-admin
+      dockerfile: ../Dockerfile.service
+    image: lexdata/admin:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9014
+      EUREKA_INSTANCE_HOSTNAME: lexdata-admin
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9014/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9014/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+      
+  lexdata-monitoring:
+    build:
+      context: ./lexdata-monitoring
+      dockerfile: ../Dockerfile.service
+    image: lexdata/monitoring:latest
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      SERVER_PORT: 9015
+      EUREKA_INSTANCE_HOSTNAME: lexdata-monitoring
+    depends_on:
+      <<: *depends-microservice
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9015/actuator/health) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:9015/actuator/health) ) >/dev/null" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ===========================================================================
+  # FRONTEND React + Nginx
+  # ===========================================================================
+
+  lexdata-frontend:
+    build:
+      context: ./lexdata-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    image: lexdata/frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      lexdata-gateway:
+        condition: service_healthy
+    networks:
+      - lexdata-network
+    healthcheck:
+      test: [ "CMD-SHELL", "( (command -v curl >/dev/null 2>&1 && curl -fsS http://localhost/) || (command -v wget >/dev/null 2>&1 && wget -qO- http://localhost/) ) >/dev/null" ]
+      interval: 30s
+      timeout: 15s
+      retries: 8
+      start_period: 90s
+      
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  elastic_data:
+    driver: local
+
+# =============================================================================
+# RÉSEAU
+# =============================================================================
+networks:
+  lexdata-network:
+    driver: bridge
+    name: lexdata-network

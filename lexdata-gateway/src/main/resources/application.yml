@@ -1,0 +1,311 @@
+server:
+  port: 8081 # Le port d'entrée unique
+
+spring:
+  application:
+    name: lexdata-gateway
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # ==========================================
+      # 🎯 LA CONFIGURATION CORS ULTIME
+      # ==========================================
+      globalcors:
+        add-to-simple-url-handler-mapping: true # Obligatoire pour les requêtes preflight (OPTIONS)
+        corsConfigurations:
+          "[/**]":
+            allowedOrigins:
+              - ${LEXDATA_CORS_ALLOWED_ORIGIN:http://localhost}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+      routes:
+        - id: lexdata-auth-service
+          uri: lb://LEXDATA-AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-user-service-users
+          uri: lb://LEXDATA-USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/user
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-user-service-profiles
+          uri: lb://LEXDATA-USER-SERVICE
+          predicates:
+            - Path=/api/profiles/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-user-service-preferences
+          uri: lb://LEXDATA-USER-SERVICE
+          predicates:
+            - Path=/api/preferences/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-user-service-company
+          uri: lb://LEXDATA-USER-SERVICE
+          predicates:
+            - Path=/api/company/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-juridique-base
+          uri: lb://LEXDATA-JURIDIQUE-BASE
+          predicates:
+            - Path=/api/juridique/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@keyResolver}"
+
+        - id: lexdata-consultations
+          uri: lb://LEXDATA-CONSULTATIONS
+          predicates:
+            - Path=/api/consultations/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        # --- Admin notifications (service dédié, avant le catch-all /api/admin/**) ---
+        - id: lexdata-notifications-admin
+          uri: lb://LEXDATA-NOTIFICATIONS
+          predicates:
+            - Path=/api/admin/notifications/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: notificationsServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@keyResolver}"
+
+        # --- ROUTE : ADMIN ---
+        - id: lexdata-admin
+          uri: lb://LEXDATA-ADMIN
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: adminServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@keyResolver}"
+
+        # --- ROUTE : SYNTHESE ---
+        - id: synthese-service
+          uri: lb://LEXDATA-SYNTHESE
+          predicates:
+            - Path=/api/synthese/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: syntheseServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        # --- ROUTE : VEILLE ---
+        - id: veille-service
+          uri: lb://LEXDATA-VEILLE
+          predicates:
+            - Path=/api/veille/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: veilleServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        # --- ROUTE : NOTIFICATIONS ---
+        - id: notification-service
+          uri: lb://LEXDATA-NOTIFICATIONS
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: notificationsServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@keyResolver}"
+
+        # --- ROUTE : MONITORING ---
+        - id: monitoring-service
+          uri: lb://LEXDATA-MONITORING
+          predicates:
+            - Path=/api/monitoring/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: monitoringServiceCircuitBreaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@keyResolver}"
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      authServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      adminServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      syntheseServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      veilleServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      notificationsServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+      monitoringServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,gateway
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: WARN
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Auth Service
+        url: /api/auth/v3/api-docs
+      - name: User Service
+        url: /api/users/v3/api-docs
+      - name: Juridique Service
+        url: /api/juridique/v3/api-docs
+      - name: Synthese Service
+        url: /api/synthese/v3/api-docs
+      - name: Veille Service
+        url: /api/veille/v3/api-docs
+      - name: Notifications Service
+        url: /api/notifications/v3/api-docs
+
+lexdata:
+  jwtSecret: ${LEXDATA_JWT_SECRET}

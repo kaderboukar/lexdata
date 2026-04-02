@@ -1,0 +1,56 @@
+# =============================================================================
+# Infra — Apply Kubernetes Manifests
+# Triggers only when files inside k8s/ are modified.
+# Useful for rolling out infrastructure changes (ConfigMap, ingress, etc.)
+# without a full image rebuild.
+# =============================================================================
+name: Infra — Apply K8s Manifests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'k8s/**'
+
+env:
+  NAMESPACE: lexdata
+
+jobs:
+  apply-manifests:
+    name: kubectl apply k8s/
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Detect changed K8s files
+        id: changes
+        uses: tj-actions/changed-files@v43
+        with:
+          files: 'k8s/**'
+
+      - name: Apply changed manifests
+        if: steps.changes.outputs.any_changed == 'true'
+        run: |
+          echo "Changed files: ${{ steps.changes.outputs.all_changed_files }}"
+          for file in ${{ steps.changes.outputs.all_changed_files }}; do
+            echo "→ Applying $file"
+            kubectl apply -f "$file" -n ${{ env.NAMESPACE }}
+          done
+
+      - name: Verify namespace state
+        run: |
+          kubectl get all -n ${{ env.NAMESPACE }}

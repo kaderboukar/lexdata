@@ -1,0 +1,47 @@
+server:
+  port: 9015
+
+spring:
+  application:
+    name: lexdata-monitoring
+  datasource:
+    # On laisse Docker Compose écraser ça, mais on met des valeurs par défaut propres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/lexdata_db}
+    username: ${SPRING_DATASOURCE_USERNAME:lexdata_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+
+eureka:
+  instance:
+    # Magie : Si Docker passe EUREKA_INSTANCE_HOSTNAME, on l'utilise. Sinon, localhost.
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: true
+    # ON A SUPPRIMÉ ip-address: 127.0.0.1 !!!
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://admin:admin_password@localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+lexdata:
+  jwtSecret: 404E635266556A586E3272375782413F4428472B4B6250645367566B5970337336763979244226452948404D6351655468576D5A71347437
+  jwtExpirationMs: 1800000

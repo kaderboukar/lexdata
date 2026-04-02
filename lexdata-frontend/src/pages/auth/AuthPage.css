@@ -1,0 +1,267 @@
+/* ==========================================================================
+   LEXDATA - AUTHENTICATION PAGES (Premium & Robust)
+   ========================================================================== */
+
+.auth-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-body);
+}
+
+/* --- COLONNE GAUCHE (Branding) --- */
+.auth-sidebar {
+  width: 45%;
+  max-width: 600px;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--bg-body) 100%);
+  border-right: 1px solid var(--border-light);
+  padding: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-sidebar-content {
+  position: relative;
+  z-index: 2;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 2rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  margin-bottom: 4rem;
+  transition: transform var(--transition);
+  display: inline-flex;
+}
+
+.sidebar-logo:hover {
+  transform: scale(1.05);
+}
+
+.sidebar-logo strong {
+  font-weight: 800;
+}
+
+.sidebar-quote h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-quote p {
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  max-width: 90%;
+}
+
+.sidebar-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 1.05rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  transition: transform var(--transition), border-color var(--transition);
+}
+
+.feature-item:hover {
+  transform: translateX(10px);
+  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+.sidebar-glow {
+  position: absolute;
+  bottom: -100px;
+  left: -100px;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.12) 0%, transparent 60%);
+  border-radius: 50%;
+  z-index: 1;
+  animation: float 15s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* --- COLONNE DROITE (Formulaire) --- */
+.auth-form-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+/* Bouton retour mobile uniquement */
+.mobile-back-btn {
+  display: none;
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  color: var(--text-secondary);
+}
+
+.auth-form-wrapper {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Effet Glassmorphism pour le formulaire */
+.auth-box {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.form-header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.form-header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.form-header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* Liens textuels */
+.auth-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+.auth-link:hover {
+  color: var(--accent-hover);
+  text-shadow: var(--glow-accent);
+}
+
+.auth-link-small {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.auth-link-small:hover {
+  color: var(--accent);
+}
+
+/* --- INPUT MOT DE PASSE (Propre) --- */
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 45px;
+}
+
+/* Laisse la place à l'icône */
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition), transform var(--transition);
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-primary);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* --- ANIMATION ERREUR (Le "Shake") --- */
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+  .auth-sidebar {
+    display: none;
+  }
+
+  /* Cache la sidebar sur mobile */
+  .mobile-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .auth-form-container {
+    padding: 1rem;
+  }
+
+  .auth-box {
+    padding: 2rem 1.5rem;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+}
+
+/* ... (Garder la partie Register Specific de ton CSS) ... */

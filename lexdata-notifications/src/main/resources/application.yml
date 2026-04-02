@@ -1,0 +1,114 @@
+server:
+  port: 9013
+
+spring:
+  application:
+    name: lexdata-notifications
+  datasource:
+    # On laisse Docker Compose écraser ça, mais on met des valeurs par défaut propres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/lexdata_db}
+    username: ${SPRING_DATASOURCE_USERNAME:lexdata_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025} # MailHog par défaut
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+
+
+
+
+eureka:
+  instance:
+    # Magie : Si Docker passe EUREKA_INSTANCE_HOSTNAME, on l'utilise. Sinon, localhost.
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: true
+    # ON A SUPPRIMÉ ip-address: 127.0.0.1 !!!
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://admin:admin_password@localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    com.lexdata.notifications: INFO
+
+springdoc:
+  api-docs:
+    path: /api/notifications/v3/api-docs
+  swagger-ui:
+    path: /api/notifications/swagger-ui.html
+
+lexdata:
+  internal:
+    apiKey: ${LEXDATA_INTERNAL_API_KEY:lexdata-dev-internal-key}
+  app:
+    # Le secret est un HEX (utilisé par JwtUtils.hexStringToByteArray)
+    # Fallback utile si l'environnement fournit LEXDATA_APP_JWTSECRET (présent en k8s/secrets.yaml)
+    jwtSecret: ${LEXDATA_JWT_SECRET:${LEXDATA_APP_JWTSECRET:}}
+    jwtExpirationMs: ${LEXDATA_JWT_EXPIRATION:86400000}
+  notifications:
+    retry:
+      max-attempts: 3
+      poll-ms: 60000
+    digest:
+      max-items: 50
+      cron: "0 0 8 * * *"
+

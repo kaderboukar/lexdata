@@ -1,0 +1,789 @@
+/* ==========================================================================
+   LEXDATA - DESIGN SYSTEM UNIFIÉ (V2 - Premium & Robust)
+   Source de vérité pour l'interface utilisateur.
+   ========================================================================== */
+
+/* --- FONTS --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Tailwind (hybride) : tokens = CSS vars, utilitaires = Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- 1. VARIABLES GLOBALES --- */
+:root {
+  /* Fonds */
+  --bg-body: #0f1827;
+  --bg-2: #121e33;
+  --surface: #1e2d4a;
+  --surface-glass: rgba(30, 45, 74, 0.7);
+  --surface-card: rgba(26, 39, 68, 0.85);
+  --surface-hover: #243358;
+  --overlay: rgba(15, 24, 39, 0.85);
+
+  /* Primaire */
+  --primary: #1a2744;
+  --primary-light: #243358;
+  --primary-dark: #10192d;
+
+  /* Accent Doré */
+  --accent: #c9a84c;
+  --accent-light: #d4b86a;
+  --accent-dark: #a8843a;
+  --accent-hover: #e8c55a;
+  --glow-accent: 0 0 15px rgba(201, 168, 76, 0.3);
+
+  /* Textes */
+  --text-primary: #f0f4ff;
+  --text-secondary: #8fa3cc;
+  --text-muted: #5a729a;
+
+  /* Bordures */
+  --border: rgba(201, 168, 76, 0.15);
+  --border-light: rgba(255, 255, 255, 0.06);
+  --focus-ring: 0 0 0 3px rgba(201, 168, 76, 0.25);
+
+  /* Statuts */
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --danger-hover: #c0392b;
+  --info: #3498db;
+
+  /* Rayons */
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-sm: 8px;
+
+  /* Ombres */
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 4px 20px rgba(201, 168, 76, 0.15);
+
+  /* Transitions */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Typographie */
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-reading: 'Georgia', serif;
+
+  /* Z-index scale */
+  --z-overlay: 999;
+  --z-navbar: 1000;
+  --z-navbar-above: 1001;
+  --z-modal: 1100;
+  --z-tooltip: 1200;
+}
+
+/* --- Tailwind component primitives (mapped to CSS vars) --- */
+@layer components {
+  /* Back-compat (noms demandés) + aliases préfixés (lex-*) */
+  .lexdata-card,
+  .lex-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  }
+
+  .lexdata-card:hover,
+  .lex-card:hover {
+    border-color: rgba(201, 168, 76, 0.4);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg), var(--shadow-accent);
+  }
+
+  .lexdata-btn-primary,
+  .lex-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--primary-dark);
+    box-shadow: var(--shadow-accent);
+    transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .lexdata-btn-primary:hover:not(:disabled),
+  .lex-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.03);
+    box-shadow: 0 10px 26px rgba(201, 168, 76, 0.35);
+  }
+
+  .lexdata-btn-primary:active,
+  .lex-btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .lexdata-btn-primary:disabled,
+  .lex-btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .lexdata-btn-secondary,
+  .lex-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .lexdata-btn-secondary:hover:not(:disabled),
+  .lex-btn-secondary:hover:not(:disabled) {
+    background: rgba(201, 168, 76, 0.08);
+    border-color: rgba(201, 168, 76, 0.45);
+    color: var(--accent);
+  }
+
+  .lexdata-btn-secondary:active,
+  .lex-btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  .lexdata-input,
+  .lex-input {
+    width: 100%;
+    background: rgba(15, 24, 39, 0.4);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem 1rem;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  }
+
+  .lexdata-input:focus,
+  .lex-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: var(--focus-ring);
+  }
+
+  .lexdata-input:focus-visible,
+  .lex-input:focus-visible,
+  .lexdata-btn-primary:focus-visible,
+  .lex-btn-primary:focus-visible,
+  .lexdata-btn-secondary:focus-visible,
+  .lex-btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .lexdata-badge,
+  .lex-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* --- Framer Motion page transitions (class-based hooks) --- */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-exit {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* --- Legal document reading (dense, numbered, highlightable) --- */
+.legal-content {
+  font-family: var(--font-reading);
+  line-height: 1.8;
+  color: var(--text-primary);
+  max-width: 80ch;
+  counter-reset: lex-article;
+}
+
+.legal-content h1,
+.legal-content h2,
+.legal-content h3 {
+  font-family: var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.legal-content .article {
+  counter-increment: lex-article;
+  margin-top: 1.25rem;
+  counter-reset: lex-clause;
+}
+
+.legal-content .article > .article-title::before {
+  content: "Article " counter(lex-article) " — ";
+  color: var(--accent);
+  font-weight: 800;
+  font-family: var(--font-ui);
+}
+
+.legal-content .article .clause {
+  counter-increment: lex-clause;
+  position: relative;
+  padding-left: 2.25rem;
+  margin-top: 0.75rem;
+}
+
+.legal-content .article .clause::before {
+  content: counter(lex-article) "." counter(lex-clause);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2rem;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.legal-content .highlight-yellow {
+  background: rgba(201, 168, 76, 0.22);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.35);
+}
+
+.legal-content .highlight-blue {
+  background: rgba(52, 152, 219, 0.22);
+  border-bottom: 1px solid rgba(52, 152, 219, 0.35);
+}
+
+/* --- 2. RESET & BASE --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-shadow: var(--glow-accent);
+}
+
+/* --- 3. LAYOUT --- */
+.page-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  animation: pageEnter var(--transition-slow);
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 100px;
+  /* Espace pour le header fixe */
+  padding-bottom: 40px;
+}
+
+/* Portal layout shell (mobile-first) */
+.portal-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .portal-shell {
+    grid-template-columns: 260px 1fr;
+    align-items: start;
+  }
+}
+
+.portal-sidebar,
+.portal-topbar {
+  padding: 1rem;
+}
+
+.portal-main {
+  display: grid;
+  gap: 1rem;
+}
+
+.portal-content {
+  min-height: 60vh;
+}
+
+/* --- 4. GLASSMORPHISM & CARDS --- */
+.glass-card {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.glass-card:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), var(--shadow-accent);
+}
+
+/* --- 5. BOUTONS --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all var(--transition);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  box-shadow: 0 8px 25px rgba(201, 168, 76, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: rgba(231, 76, 60, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(231, 76, 60, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* --- Utilitaires typographie / spacing (landing & global) --- */
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.ml-2 { margin-left: 1rem; }
+.py-5 { padding-top: 3rem; padding-bottom: 3rem; }
+.text-sm { font-size: 0.85rem; }
+.text-center { text-align: center; }
+.block { display: block; }
+.text-accent { color: var(--accent); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-warning { color: var(--warning); }
+
+/* --- 6. FORMULAIRES --- */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  transition: color var(--transition);
+}
+
+.form-control {
+  background: rgba(15, 24, 39, 0.4);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  transition: all var(--transition);
+  width: 100%;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: var(--focus-ring);
+}
+
+/* État d'erreur sur input */
+.form-control.error {
+  border-color: var(--danger);
+}
+
+/* --- 7. BADGES --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.badge-premium {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--accent);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.badge-success {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--success);
+}
+
+.badge-danger {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--danger);
+}
+
+/* --- 8. ANIMATIONS & ÉTATS --- */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes lexPulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* PageLoader (no CLS): fixed en fullscreen, flow sinon */
+.page-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 60vh;
+  color: var(--text-secondary);
+}
+
+.page-loader.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  background: var(--bg-body);
+  z-index: 50;
+}
+
+.page-loader__text {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  animation: lexPulse 1.2s ease-in-out infinite;
+}
+
+/* NotFound background: subtle floating legal glyphs (CSS-only) */
+.notfound {
+  position: relative;
+  overflow: hidden;
+}
+
+.notfound__bg {
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(201, 168, 76, 0.10), transparent 45%),
+    radial-gradient(circle at 80% 35%, rgba(201, 168, 76, 0.08), transparent 55%),
+    radial-gradient(circle at 35% 80%, rgba(143, 163, 204, 0.07), transparent 55%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.notfound__bg::before,
+.notfound__bg::after {
+  content: "⚖  §  ¶  ⚖  §  ¶  ⚖  §  ¶";
+  position: absolute;
+  left: 0;
+  right: 0;
+  color: rgba(240, 244, 255, 0.06);
+  font-size: 28px;
+  letter-spacing: 18px;
+  animation: floatGlyphs 12s linear infinite;
+  white-space: nowrap;
+}
+
+.notfound__bg::after {
+  top: 55%;
+  animation-duration: 16s;
+  opacity: 0.7;
+}
+
+@keyframes floatGlyphs {
+  from {
+    transform: translate3d(-20%, 10%, 0);
+  }
+  to {
+    transform: translate3d(20%, -10%, 0);
+  }
+}
+
+.notfound__title {
+  font-size: clamp(4.5rem, 14vw, 8rem);
+  font-weight: 800;
+  background: linear-gradient(var(--accent), var(--accent-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+/* --- 9. TABLEAUX --- */
+.table-container {
+  overflow-x: auto;
+  background: var(--surface-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-light);
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+}
+
+/* --- 10. SCROLLBAR --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface);
+  border-radius: 10px;
+  border: 2px solid var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dark);
+}
+
+/* --- 11. RESPONSIVE --- */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .main-content {
+    padding-top: 80px;
+  }
+
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* --- Print: clean legal output, remove UI chrome --- */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  nav,
+  aside,
+  footer,
+  .no-print,
+  [data-ui-chrome="true"] {
+    display: none !important;
+  }
+
+  .glass-card,
+  .lexdata-card,
+  .lex-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: underline !important;
+    text-shadow: none !important;
+  }
+
+  .legal-content {
+    max-width: none;
+    color: #000000 !important;
+    font-family: var(--font-reading);
+    line-height: 1.8;
+  }
+}
+
+/* ⚡ NEXT STEP: Add Tailwind theme mapping in `tailwind.config.js` (tokens -> colors, radius, shadows). */

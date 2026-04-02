@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:authdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  # Pas de broker RabbitMQ dans les tests : évite ACCESS_REFUSED au démarrage des @RabbitListener
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+
+# Pas d’Eureka en test (évite timeout / erreur si le serveur n’est pas joignable)
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+lexdata:
+  app:
+    # JwtUtils attend une clé hex (32 octets = 64 caractères hex) pour HS256
+    jwtSecret: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    jwtExpirationMs: 3600000
+    jwtRefreshExpirationMs: 86400000
